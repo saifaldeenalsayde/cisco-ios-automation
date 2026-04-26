@@ -1,0 +1,54 @@
+from getpass import getpass
+from netmiko import ConnectHandler
+
+# قائمة الأجهزة
+ipaddresses = ["192.168.20.10", "192.168.20.9"]
+
+for ip in ipaddresses:
+    print(f'\n--- Configuration for Device: {ip} ---')
+    
+    # طلب البيانات لكل جهاز على حدة
+    user = input(f"Enter username for {ip}: ").strip()
+    passwd = getpass(f"Enter SSH password for {ip}: ").strip()
+    en_passwd = getpass(f"Enter enable password for {ip}: ").strip()
+    
+    # طلب بيانات الـ Loopback الخاصة بهذا الجهاز
+    lb_number = input("Enter Loopback number (e.g., 10): ")
+    lb_ip = input("Enter Loopback IP address: ")
+    lb_mask = input("Enter Subnet Mask (e.g., 255.255.255.255): ")
+
+    # تعريف قاموس الجهاز بالبيانات الجديدة
+    device_params = {
+        "device_type": "cisco_ios",
+        "host": ip,
+        "username": user.strip(),
+        "password": passwd.strip(),
+        "secret": en_passwd.strip(),
+        "global_delay_factor": 2
+    }
+
+    try:
+        with ConnectHandler(**device_params) as net_connect:
+            net_connect.enable()
+            
+            # بناء الأوامر بناءً على مدخلات المستخدم
+            config_commands = [
+                f'interface loopback {lb_number}',
+                f'ip address {lb_ip} {lb_mask}',
+                'description Configured via Saif Script'
+            ]
+            
+            print(f"Sending configuration to {ip}...")
+            output = net_connect.send_config_set(config_commands)
+            print(output)
+            intf_brief = net_connect.send_command("show ip interface brief")
+            facts = net_connect.send_command("show version")
+            print(intf_brief)
+            print(facts)
+
+            # حفظ الإعدادات
+            net_connect.save_config()
+            print(f"Done for {ip}!\n" + "*"*30)
+
+    except Exception as e:
+        print(f"Could not connect to {ip}: {e}")

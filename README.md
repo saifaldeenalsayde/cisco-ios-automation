@@ -13,11 +13,15 @@ Config Persistence: Automatically runs write memory to save your changes to the 
 Python 3.x installed.
 
 Netmiko library. You can install it using:
+
 Bash
 pip install netmiko
 
 🚀 How to Run
+
 Download the script file: loopback script.py.
+
 Open your terminal and run:
+
 Bash
 python loopback script.py
